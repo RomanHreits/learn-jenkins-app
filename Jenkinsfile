@@ -21,9 +21,13 @@ pipeline {
             }
         }
         stage('Test') {
-            sh '''
+            steps {
+                sh '''
                 echo "Inside the test stage"
+                test -f build/index.html
+                npm --version
             '''
+            }
         }
     }
 }

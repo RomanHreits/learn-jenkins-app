@@ -20,7 +20,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Test') {
             sh '''
                 echo "Inside the test stage"

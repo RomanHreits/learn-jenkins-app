@@ -54,7 +54,7 @@ pipeline {
                 stage('E2E') {
                     agent {
                         docker {
-                            image 'mcr.microsoft.com/playwright:v1.44.0-jammy'
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                             reuseNode true
                         }
                     }
@@ -101,10 +101,13 @@ pipeline {
                     reuseNode true
                 }
             }
+
+             environment {
+                CI_ENVIRONMENT_URL = 'https://dainty-biscuit-58dfd7.netlify.app'
+            }
+
             steps {
                 sh '''
-                    node_modules/.bin/serve -s build &
-                    sleep 10
                     npx playwright test --reporter=html
                 '''
             }

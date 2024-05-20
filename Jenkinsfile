@@ -54,16 +54,19 @@ pipeline {
                 stage('E2E') {
                     agent {
                         docker {
-                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            image 'mcr.microsoft.com/playwright:v1.44.0-jammy'
                             reuseNode true
                         }
                     }
                     steps {
                         sh '''
                             node_modules/.bin/serve -s build &
+                            sleep 10
                             npx playwright test --reporter=html
                         '''
                     }
+
+                    /* & ampersand will start appropriate command in the background and won't block other commands execution*/
                     
                     post {
                         always {
@@ -101,6 +104,7 @@ pipeline {
             steps {
                 sh '''
                     node_modules/.bin/serve -s build &
+                    sleep 10
                     npx playwright test --reporter=html
                 '''
             }

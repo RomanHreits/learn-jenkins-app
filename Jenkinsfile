@@ -76,6 +76,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Deploy staging') {
             agent {
                 docker {
@@ -100,8 +101,9 @@ pipeline {
                 }
             }
         }
+        */
 
-        stage('Staging E2E') {
+        stage('Deploy staging') {
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
@@ -109,12 +111,27 @@ pipeline {
                 }
             }
 
+            /*
             environment {
                 CI_ENVIRONMENT_URL = "${env.STAGING_URL}"
             }
+            */
 
             steps {
                 sh '''
+                    npm install netlify-cli node-jq
+                     # using the previous command we install two different packages
+
+                    node_modules/.bin/netlify --version
+                    echo "Deploying to production. Site ID: $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --json > deploy-output.json
+                    # deploy command without --prod flag will deploy our app to the temporary environment etc. "stage"
+
+                    CI_ENVIRONMENT_URL=$(node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json)
+                    # this variable will be available only within this shell script in comparison to using env... and script block
+
+
                     npx playwright test  --reporter=html
                 '''
             }
@@ -134,6 +151,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Deploy prod') {
             agent {
                 docker {
@@ -151,8 +169,9 @@ pipeline {
                 '''
             }
         }
+        */
 
-        stage('Prod E2E') {
+        stage('Deploy prod') {
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
@@ -166,6 +185,12 @@ pipeline {
 
             steps {
                 sh '''
+                    npm install netlify-cli
+                    node_modules/.bin/netlify --version
+                    echo "Deploying to production. Site ID: $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --prod
+
                     npx playwright test  --reporter=html
                 '''
             }

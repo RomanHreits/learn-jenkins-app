@@ -7,6 +7,7 @@ pipeline {
     }
 
     stages {
+
         stage('Build') {
             agent {
                 docker {
@@ -19,13 +20,13 @@ pipeline {
                     ls -la
                     node --version
                     npm --version
-                    npm install
+                    npm ci
                     npm run build
                     ls -la
                 '''
             }
         }
-    
+
         stage('Tests') {
             parallel {
                 stage('Unit tests') {
@@ -35,15 +36,13 @@ pipeline {
                             reuseNode true
                         }
                     }
+
                     steps {
                         sh '''
-                        echo "Test stage"
-                        test -f build/index.html
-                        npm --version
-                        npm test
-                    '''
+                            #test -f build/index.html
+                            npm test
+                        '''
                     }
-
                     post {
                         always {
                             junit 'jest-results/junit.xml'
@@ -58,16 +57,16 @@ pipeline {
                             reuseNode true
                         }
                     }
+
                     steps {
                         sh '''
+                            npm install serve
                             node_modules/.bin/serve -s build &
                             sleep 10
-                            npx playwright test --reporter=html
+                            npx playwright test  --reporter=html
                         '''
                     }
 
-                    /* & ampersand will start appropriate command in the background and won't block other commands execution*/
-                    
                     post {
                         always {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright Local', reportTitles: '', useWrapperFileDirectly: true])
@@ -86,6 +85,7 @@ pipeline {
             }
             steps {
                 sh '''
+                    npm install netlify-cli
                     node_modules/.bin/netlify --version
                     echo "Deploying to production. Site ID: $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
@@ -102,16 +102,16 @@ pipeline {
                 }
             }
 
-             environment {
+            environment {
                 CI_ENVIRONMENT_URL = 'https://dainty-biscuit-58dfd7.netlify.app'
             }
 
             steps {
                 sh '''
-                    npx playwright test --reporter=html
+                    npx playwright test  --reporter=html
                 '''
             }
-            
+
             post {
                 always {
                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright E2E', reportTitles: '', useWrapperFileDirectly: true])
